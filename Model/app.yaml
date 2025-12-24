@@ -1,0 +1,5 @@
+runtime: python310
+entrypoint: "{entrypoint}"
+env_variables:
+  GOOGLE_APPLICATION_CREDENTIALS: "{GOOGLE_APPLICATION_CREDENTIALS}"
+  OPENAI_API_KEY: "{OPENAI_API_KEY}"
