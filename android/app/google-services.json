@@ -1,0 +1,49 @@
+{
+  "project_info": {
+    "project_number": "338590767004",
+    "firebase_url": "https://transitai-default-rtdb.firebaseio.com",
+    "project_id": "transitai",
+    "storage_bucket": "transitai.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:338590767004:android:0adc4f4c9529b3ce539a59",
+        "android_client_info": {
+          "package_name": "com.example.app"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyDvjfnfdE4KffeCV9AeoEmd1SfheXxzYXQ"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    },
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:338590767004:android:190d071e7425935f539a59",
+        "android_client_info": {
+          "package_name": "com.example.appppp"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyDvjfnfdE4KffeCV9AeoEmd1SfheXxzYXQ"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}
