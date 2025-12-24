@@ -463,7 +463,8 @@ class InputFormScreenState extends State<InputFormScreen> with TickerProviderSta
       };
 
       try {
-        final url = Uri.parse('ngrok 주소');
+        // 서버 URL 설정 (gcp에서 배포 서버로 변경)
+        final url = Uri.parse('https://server-444217.du.r.appspot.com/predict');
         final response = await http.post(
           url,
           headers: {'Content-Type': 'application/json'},

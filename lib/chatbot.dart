@@ -1,24 +1,12 @@
 import 'package:flutter/material.dart';
 import 'package:http/http.dart' as http;
 import 'dart:convert';
-
-void main() {
-  runApp(const ChatBotApp());
-}
-
-class ChatBotApp extends StatelessWidget {
-  const ChatBotApp({Key? key}) : super(key: key);
-
-  @override
-  Widget build(BuildContext context) {
-    return MaterialApp(
-      home: ChatScreen(),
-    );
-  }
-}
+import 'package:cloud_firestore/cloud_firestore.dart'; // Firestore 사용
 
 class ChatScreen extends StatefulWidget {
-  ChatScreen({Key? key}) : super(key: key);
+  final String userId;
+
+  ChatScreen({Key? key, required this.userId}) : super(key: key);
 
   @override
   _ChatScreenState createState() => _ChatScreenState();
@@ -30,17 +18,18 @@ class _ChatScreenState extends State<ChatScreen> {
   ];
 
   TextEditingController _controller = TextEditingController();
+  final String serverUrl = 'https://server-444217.du.r.appspot.com/chat';
 
-  // 서버 URL 설정 (ngrok URL로 변경)
-  final String serverUrl = 'ngrok 주소';
-  // 고정된 user_id사용(테스트를 위해)
-  final String userId = 'rlaskdus';
-  Future<String> sendMessageToServer(String mssage) async {
+  String get userId => widget.userId;
+
+  bool _chatEnded = false; // 대화 종료 상태를 추적
+
+  Future<String> sendMessageToServer(String message) async {
     try {
       final response = await http.post(
         Uri.parse(serverUrl),
         headers: {'Content-Type': 'application/json'},
-        body: jsonEncode({'user_id':userId, 'message': mssage}),
+        body: jsonEncode({'user_id': userId, 'message': message}),
       );
 
       if (response.statusCode == 200) {
@@ -56,6 +45,8 @@ class _ChatScreenState extends State<ChatScreen> {
   }
 
   void _sendMessage() async {
+    if (_chatEnded) return; // 대화가 종료되면 메시지 전송 방지
+
     String userInput = _controller.text.trim();
     if (userInput.isEmpty) return;
 
@@ -71,8 +62,33 @@ class _ChatScreenState extends State<ChatScreen> {
     });
   }
 
+  // 다이얼로그를 표시하고 대화를 종료하는 함수
+  void _showChatEndedDialog(String message) {
+    showDialog(
+      context: context,
+      barrierDismissible: false, // 사용자가 다이얼로그 외부를 터치해도 닫히지 않도록 설정
+      builder: (BuildContext context) {
+        return AlertDialog(
+          title: Text('대화 종료'),
+          content: Text(message),
+          actions: [
+            TextButton(
+              onPressed: () {
+                Navigator.of(context).pop(); // 다이얼로그 닫기
+                Navigator.of(context).pop(); // 이전 화면으로 이동
+              },
+              child: Text('확인'),
+            ),
+          ],
+        );
+      },
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
+    final docRef = FirebaseFirestore.instance.collection('chats').doc(userId);
+
     return Scaffold(
       backgroundColor: Colors.grey[200],
       appBar: AppBar(
@@ -96,42 +112,70 @@ class _ChatScreenState extends State<ChatScreen> {
         child: Column(
           children: [
             Expanded(
-              child: ListView.builder(
-                padding: const EdgeInsets.symmetric(vertical: 8, horizontal: 16),
-                itemCount: messages.length,
-                itemBuilder: (context, index) {
-                  final message = messages[index];
-                  final isBot = message['sender'] == 'bot';
-                  return ChatBubble(
-                    isBot: isBot,
-                    message: message['message']!,
+              child: StreamBuilder<DocumentSnapshot>(
+                stream: docRef.snapshots(),
+                builder: (context, snapshot) {
+                  if (!snapshot.hasData) {
+                    return const Center(child: CircularProgressIndicator());
+                  }
+
+                  final data = snapshot.data!.data() as Map<String, dynamic>? ?? {};
+                  final systemMessage = data['system_message'] as String? ?? '';
+
+                  if (systemMessage.isNotEmpty && !_chatEnded) {
+                    final lastMessage = messages.isNotEmpty ? messages.last['message'] : '';
+                    if (lastMessage != systemMessage) {
+                      WidgetsBinding.instance.addPostFrameCallback((_) {
+                        if (mounted) {
+                          setState(() {
+                            messages.add({"sender": "bot", "message": systemMessage});
+                            _chatEnded = true; // 대화 종료 상태로 설정
+                          });
+                          _showChatEndedDialog(systemMessage);
+                        }
+                      });
+                    }
+                  }
+
+                  return ListView.builder(
+                    padding: const EdgeInsets.symmetric(vertical: 8, horizontal: 16),
+                    itemCount: messages.length,
+                    itemBuilder: (context, index) {
+                      final message = messages[index];
+                      final isBot = message['sender'] == 'bot';
+                      return ChatBubble(
+                        isBot: isBot,
+                        message: message['message']!,
+                      );
+                    },
                   );
                 },
               ),
             ),
-            Container(
-              color: Colors.white,
-              padding: const EdgeInsets.symmetric(vertical: 4, horizontal: 8),
-              child: Row(
-                children: [
-                  Expanded(
-                    child: TextField(
-                      controller: _controller,
-                      decoration: const InputDecoration(
-                        hintText: '메시지를 입력하세요...',
-                        border: OutlineInputBorder(),
-                        fillColor: Colors.white,
-                        filled: true,
+            if (!_chatEnded) // 대화가 종료되지 않았을 때만 입력 필드 표시
+              Container(
+                color: Colors.white,
+                padding: const EdgeInsets.symmetric(vertical: 4, horizontal: 8),
+                child: Row(
+                  children: [
+                    Expanded(
+                      child: TextField(
+                        controller: _controller,
+                        decoration: const InputDecoration(
+                          hintText: '메시지를 입력하세요...',
+                          border: OutlineInputBorder(),
+                          fillColor: Colors.white,
+                          filled: true,
+                        ),
                       ),
                     ),
-                  ),
-                  IconButton(
-                    icon: const Icon(Icons.send, color: Colors.blue),
-                    onPressed: _sendMessage,
-                  ),
-                ],
+                    IconButton(
+                      icon: const Icon(Icons.send, color: Colors.blue),
+                      onPressed: _sendMessage,
+                    ),
+                  ],
+                ),
               ),
-            ),
           ],
         ),
       ),

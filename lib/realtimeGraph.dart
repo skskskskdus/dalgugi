@@ -7,10 +7,10 @@ class RealTimeGraph extends StatefulWidget {
   const RealTimeGraph({super.key});
 
   @override
-  _RealTimeGraphState createState() => _RealTimeGraphState();
+  RealTimeGraphState createState() => RealTimeGraphState();
 }
 
-class _RealTimeGraphState extends State<RealTimeGraph> with SingleTickerProviderStateMixin {
+class RealTimeGraphState extends State<RealTimeGraph> with SingleTickerProviderStateMixin {
   String? selectedDay; // 요일
   String? selectedDate; // 날짜
   String? selectedTime; // 시간 입력

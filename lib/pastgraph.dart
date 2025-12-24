@@ -1,4 +1,4 @@
-import 'package:app/prediction_chart.dart';
+import 'prediction_chart.dart';
 import 'package:flutter/material.dart';
 
 class RealtimeGraphScreen extends StatelessWidget {
